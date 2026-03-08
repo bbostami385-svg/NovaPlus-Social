@@ -1,0 +1,47 @@
+# NovaPlus Social App: All-in-One Code Guide
+
+## 1️⃣ Splash Screen Layout (res/layout/activity_splash.xml)
+<ImageView
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:src="@drawable/splash_logo"
+    android:scaleType="centerInside"
+    android:background="#000000"/>
+
+## 2️⃣ Login Screen Layout (res/layout/activity_login.xml)
+<ImageView
+    android:id="@+id/logo"
+    android:layout_width="150dp"
+    android:layout_height="150dp"
+    android:src="@drawable/login_logo"
+    android:layout_gravity="center"/>
+
+<EditText
+    android:id="@+id/email"
+    android:hint="Email"/>
+
+<EditText
+    android:id="@+id/password"
+    android:hint="Password"
+    android:inputType="textPassword"/>
+
+<Button
+    android:text="Log In"/>
+
+## 3️⃣ App Icon / ImageView Example (res/mipmap/ic_rocket.png)
+<ImageView
+    android:src="@mipmap/ic_rocket"
+    android:layout_width="50dp"
+    android:layout_height="50dp"/>
+
+## 4️⃣ AndroidManifest.xml Activity Declaration
+<activity
+    android:name=".SplashActivity"
+    android:theme="@style/Theme.Splash">
+    <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+        <category android:name="android.intent.category.LAUNCHER"/>
+    </intent-filter>
+</activity>
+
+<activity android:name=".LoginActivity" />
