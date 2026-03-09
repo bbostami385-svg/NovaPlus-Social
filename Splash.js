@@ -3,9 +3,8 @@ import SplashLogo from "../assets/splash_logo.png";
 
 function Splash() {
   return (
-    <div style={{ textAlign: "center", marginTop: "100px" }}>
-      <img src={SplashLogo} alt="Splash Logo" width={200} />
-      <h1>Welcome to NovaPlus Social</h1>
+    <div style={{ textAlign: "center", background: "#000", height: "100vh" }}>
+      <img src={SplashLogo} alt="Splash Logo" style={{ width: "200px", marginTop: "40vh" }} />
     </div>
   );
 }
