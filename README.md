@@ -1,6 +1,6 @@
-# Nova Plus
+# NovaPlus Social 
 
-**Platform:** Nova Plus  
+**Platform:** Nova Plus Social 
 **Company:** Bayojid AI  
 **Tagline:** “Connecting the World. Powered by Bayojid AI.”
 
@@ -8,7 +8,7 @@
 
 ## Overview
 
-Nova Plus is a modern, AI-powered social media platform designed to connect people across the world.  
+NovaPlus Social is a modern, AI-powered social media platform designed to connect people across the world.  
 It integrates **Bayojid AI** for smart AI chat features and content recommendations, providing a unique and interactive user experience.  
 
 - User-friendly interface for web and mobile  
