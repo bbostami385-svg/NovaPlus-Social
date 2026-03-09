@@ -1,10 +1,8 @@
-// fullBackend.js
-// Nova Plus Backend - Single File Version
-// Powered by Bayojid AI
-
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
 const app = express();
@@ -13,102 +11,56 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-/* =======================
-   Models
-======================= */
-const { Schema, model } = mongoose;
-
-const UserSchema = new Schema({
+// Models
+const UserSchema = new mongoose.Schema({
   name: String,
   email: { type: String, unique: true },
   password: String,
-  profilePic: String,
   createdAt: { type: Date, default: Date.now }
 });
-const User = model("User", UserSchema);
+const User = mongoose.model("User", UserSchema);
 
-const PostSchema = new Schema({
-  userId: String,
-  content: String,
-  image: String,
-  likes: { type: Number, default: 0 },
-  createdAt: { type: Date, default: Date.now }
-});
-const Post = model("Post", PostSchema);
+// Routes
+app.post("/api/auth/signup", async (req, res) => {
+  const { name, email, password } = req.body;
+  try {
+    const existingUser = await User.findOne({ email });
+    if (existingUser) return res.status(400).json({ msg: "Email already exists" });
 
-const CommentSchema = new Schema({
-  postId: String,
-  userId: String,
-  comment: String,
-  createdAt: { type: Date, default: Date.now }
-});
-const Comment = model("Comment", CommentSchema);
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = new User({ name, email, password: hashedPassword });
+    await newUser.save();
 
-/* =======================
-   Controllers
-======================= */
-const authController = {
-  signup: (req, res) => {
-    res.send("Signup API placeholder");
-  },
-  login: (req, res) => {
-    res.send("Login API placeholder");
+    res.status(201).json({ msg: "User created successfully" });
+  } catch (err) {
+    res.status(500).json({ msg: "Server error", error: err });
   }
-};
-
-const postController = {
-  createPost: (req, res) => {
-    res.send("Create Post API placeholder");
-  },
-  getPosts: (req, res) => {
-    res.send("Get Posts API placeholder");
-  }
-};
-
-const chatController = {
-  chatWithAI: (req, res) => {
-    const { message } = req.body;
-    res.json({ reply: `Bayojid AI received: ${message}` });
-  }
-};
-
-/* =======================
-   Routes
-======================= */
-const router = express.Router();
-
-// Auth Routes
-router.post("/api/auth/signup", authController.signup);
-router.post("/api/auth/login", authController.login);
-
-// Post Routes
-router.post("/api/posts", postController.createPost);
-router.get("/api/posts", postController.getPosts);
-
-// Chat Routes
-router.post("/api/chat", chatController.chatWithAI);
-
-app.use("/", router);
-
-/* =======================
-   Test Route
-======================= */
-app.get("/", (req, res) => {
-  res.send("Nova Plus Full Backend is Running 🚀");
 });
 
-/* =======================
-   MongoDB Connection
-======================= */
+app.post("/api/auth/login", async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json({ msg: "User not found" });
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(400).json({ msg: "Invalid password" });
+
+    const token = jwt.sign({ id: user._id }, "YOUR_SECRET_KEY", { expiresIn: "7d" });
+    res.json({ msg: "Login successful", token, user });
+  } catch (err) {
+    res.status(500).json({ msg: "Server error", error: err });
+  }
+});
+
+// Test Route
+app.get("/", (req, res) => res.send("NovaPlus Social Backend Running 🚀"));
+
+// Connect MongoDB
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 }).then(() => console.log("MongoDB connected"))
   .catch(err => console.log("MongoDB connection error:", err));
 
-/* =======================
-   Start Server
-======================= */
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
