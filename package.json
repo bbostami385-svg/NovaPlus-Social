@@ -1,9 +1,9 @@
 {
-  "name": "novaplus-backend",
+  "name": "novaplus-social-backend",
   "version": "1.0.0",
-  "main": "src/server.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node src/server.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.0",
