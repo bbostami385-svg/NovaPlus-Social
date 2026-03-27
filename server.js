@@ -134,7 +134,7 @@ app.post("/api/auth/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email);
+    const user = await User.findOne({ email }); // ✅ FIXED
     if (!user) return res.status(400).json({ msg: "User not found" });
 
     const ok = await bcrypt.compare(password, user.password);
@@ -298,7 +298,7 @@ app.get("/api/messages/:userId", auth, async (req, res) => {
       { senderId: req.user.id, receiverId: req.params.userId },
       { senderId: req.params.userId, receiverId: req.user.id }
     ]
-  });
+  }).sort({ createdAt: 1 });
 
   res.json(msgs);
 });
@@ -338,7 +338,7 @@ app.post("/api/users/:id/add-friend", auth, async (req, res) => {
   res.json({ msg: "Request sent" });
 });
 
-// ACCEPT
+// ACCEPT FRIEND
 app.post("/api/users/:id/accept", auth, async (req, res) => {
   const me = await User.findById(req.user.id);
   const sender = await User.findById(req.params.id);
