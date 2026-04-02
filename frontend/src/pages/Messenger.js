@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 
 const API = process.env.REACT_APP_API;
@@ -8,42 +8,50 @@ function Messenger() {
   const [userId, setUserId] = useState("");
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
-  const [onlineUsers, setOnlineUsers] = useState([]);
-  const [typingUser, setTypingUser] = useState("");
+  const [typing, setTyping] = useState(false);
 
   const token = localStorage.getItem("token");
   const myId = localStorage.getItem("userId");
 
+  const chatRef = useRef(null);
+
   // -----------------------
-  // SOCKET REGISTER
+  // JOIN ROOM
   // -----------------------
   useEffect(() => {
-    if (myId) {
-      socket.emit("addUser", myId);
+    if (myId && userId) {
+      socket.emit("joinRoom", {
+        senderId: myId,
+        receiverId: userId
+      });
     }
+  }, [userId, myId]);
 
-    socket.on("getUsers", (users) => {
-      setOnlineUsers(users);
-    });
-
+  // -----------------------
+  // SOCKET EVENTS
+  // -----------------------
+  useEffect(() => {
     socket.on("receiveMessage", (msg) => {
       setMessages((prev) => [...prev, msg]);
     });
 
-    socket.on("typing", (data) => {
-      setTypingUser(data.senderId);
-
-      setTimeout(() => {
-        setTypingUser("");
-      }, 1000);
+    socket.on("typing", () => {
+      setTyping(true);
+      setTimeout(() => setTyping(false), 1000);
     });
 
     return () => {
-      socket.off("getUsers");
       socket.off("receiveMessage");
       socket.off("typing");
     };
-  }, [myId]);
+  }, []);
+
+  // -----------------------
+  // AUTO SCROLL
+  // -----------------------
+  useEffect(() => {
+    chatRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   // -----------------------
   // LOAD OLD MESSAGES
@@ -65,7 +73,7 @@ function Messenger() {
   // SEND MESSAGE
   // -----------------------
   const sendMessage = async () => {
-    if (!text) return;
+    if (!text || !userId) return;
 
     const msg = {
       senderId: myId,
@@ -74,10 +82,10 @@ function Messenger() {
       createdAt: new Date()
     };
 
-    // real-time
+    // 🔥 REAL-TIME
     socket.emit("sendMessage", msg);
 
-    // DB save
+    // 🔥 SAVE DB
     try {
       await fetch(`${API}/api/messages`, {
         method: "POST",
@@ -99,68 +107,86 @@ function Messenger() {
   };
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h2>Messenger 💬 (Live)</h2>
+    <div style={{
+      maxWidth: "500px",
+      margin: "auto",
+      padding: "20px",
+      textAlign: "center"
+    }}>
+      <h2>💬 Messenger (Private Chat)</h2>
 
-      {/* ONLINE USERS */}
-      <p>🟢 Online Users: {onlineUsers.length}</p>
-
+      {/* USER INPUT */}
       <input
         placeholder="Enter userId"
         value={userId}
         onChange={(e) => setUserId(e.target.value)}
+        style={{ padding: "8px", width: "70%" }}
       />
 
-      <button onClick={loadMessages}>Load Chat</button>
+      <button onClick={loadMessages} style={{ marginLeft: "10px" }}>
+        Load
+      </button>
 
       {/* CHAT BOX */}
       <div style={{
-        border: "1px solid gray",
-        marginTop: "10px",
+        border: "1px solid #ccc",
+        marginTop: "15px",
         padding: "10px",
-        height: "300px",
-        overflowY: "scroll"
+        height: "350px",
+        overflowY: "auto",
+        borderRadius: "10px",
+        background: "#f9f9f9"
       }}>
         {messages.map((m, i) => (
           <div
             key={i}
             style={{
-              textAlign: m.senderId === myId ? "right" : "left"
+              textAlign: m.senderId === myId ? "right" : "left",
+              margin: "5px 0"
             }}
           >
-            <p style={{
-              background: "#eee",
+            <span style={{
               display: "inline-block",
-              padding: "5px 10px",
-              borderRadius: "10px"
+              padding: "8px 12px",
+              borderRadius: "15px",
+              background: m.senderId === myId ? "#dcf8c6" : "#eee",
+              maxWidth: "70%"
             }}>
               {m.text}
-            </p>
+            </span>
           </div>
         ))}
 
-        {/* TYPING INDICATOR */}
-        {typingUser && (
-          <p><i>Typing...</i></p>
+        {/* TYPING */}
+        {typing && (
+          <p style={{ fontSize: "12px", color: "gray" }}>
+            Typing...
+          </p>
         )}
+
+        <div ref={chatRef}></div>
       </div>
 
       {/* INPUT */}
-      <input
-        value={text}
-        onChange={(e) => {
-          setText(e.target.value);
+      <div style={{ marginTop: "10px" }}>
+        <input
+          value={text}
+          onChange={(e) => {
+            setText(e.target.value);
 
-          // typing emit
-          socket.emit("typing", {
-            senderId: myId,
-            receiverId: userId
-          });
-        }}
-        placeholder="Type message..."
-      />
+            socket.emit("typing", {
+              senderId: myId,
+              receiverId: userId
+            });
+          }}
+          placeholder="Type message..."
+          style={{ padding: "10px", width: "70%" }}
+        />
 
-      <button onClick={sendMessage}>Send</button>
+        <button onClick={sendMessage} style={{ marginLeft: "10px" }}>
+          Send
+        </button>
+      </div>
     </div>
   );
 }
