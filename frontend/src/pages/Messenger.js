@@ -12,12 +12,14 @@ function Messenger() {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
   const [media, setMedia] = useState(null);
+  const [typingUser, setTypingUser] = useState("");
 
   const token = localStorage.getItem("token");
   const myId = localStorage.getItem("userId");
 
   const mediaRecorder = useRef(null);
   const chunks = useRef([]);
+  const chatRef = useRef();
 
   // -----------------------
   // LOAD FRIENDS
@@ -35,16 +37,35 @@ function Messenger() {
   }, []);
 
   // -----------------------
-  // SOCKET
+  // SOCKET INIT
   // -----------------------
   useEffect(() => {
+    if (!myId) return;
+
     socket.emit("addUser", myId);
 
     socket.on("receiveMessage", (msg) => {
       setMessages((prev) => [...prev, msg]);
     });
 
-    return () => socket.off("receiveMessage");
+    socket.on("typing", (data) => {
+      setTypingUser(data.senderId);
+      setTimeout(() => setTypingUser(""), 1000);
+    });
+
+    socket.on("seen", ({ senderId }) => {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.senderId === senderId ? { ...m, status: "seen" } : m
+        )
+      );
+    });
+
+    return () => {
+      socket.off("receiveMessage");
+      socket.off("typing");
+      socket.off("seen");
+    };
   }, [myId]);
 
   // -----------------------
@@ -52,6 +73,18 @@ function Messenger() {
   // -----------------------
   const loadMessages = async (id) => {
     setCurrentChat(id);
+
+    // 🔥 join room
+    socket.emit("joinRoom", {
+      senderId: myId,
+      receiverId: id
+    });
+
+    // 🔥 seen trigger
+    socket.emit("seen", {
+      senderId: myId,
+      receiverId: id
+    });
 
     const res = await fetch(`${API}/api/messages/${id}`, {
       headers: { Authorization: "Bearer " + token }
@@ -62,7 +95,14 @@ function Messenger() {
   };
 
   // -----------------------
-  // UPLOAD FILE (Firebase)
+  // AUTO SCROLL
+  // -----------------------
+  useEffect(() => {
+    chatRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // -----------------------
+  // UPLOAD FILE
   // -----------------------
   const uploadFile = async (file) => {
     const fileRef = ref(storage, "chat/" + Date.now());
@@ -106,7 +146,7 @@ function Messenger() {
   };
 
   // -----------------------
-  // VOICE RECORD 🎤
+  // VOICE RECORD
   // -----------------------
   const startRecording = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -119,7 +159,6 @@ function Messenger() {
     mediaRecorder.current.onstop = async () => {
       const blob = new Blob(chunks.current, { type: "audio/mp3" });
       const url = await uploadFile(blob);
-
       sendVoice(url);
       chunks.current = [];
     };
@@ -131,11 +170,12 @@ function Messenger() {
     mediaRecorder.current.stop();
   };
 
-  const sendVoice = async (url) => {
+  const sendVoice = (url) => {
     const msg = {
       senderId: myId,
       receiverId: currentChat,
-      audio: url
+      audio: url,
+      status: "sent"
     };
 
     socket.emit("sendMessage", msg);
@@ -144,7 +184,7 @@ function Messenger() {
 
   return (
     <div style={{ display: "flex", height: "100vh" }}>
-      
+
       {/* FRIEND LIST */}
       <div style={{ width: "30%", borderRight: "1px solid gray" }}>
         <h3>Friends</h3>
@@ -157,7 +197,7 @@ function Messenger() {
 
       {/* CHAT */}
       <div style={{ width: "70%", padding: "10px" }}>
-        <h3>Chat</h3>
+        <h3>Chat 💬</h3>
 
         <div style={{ height: "70%", overflowY: "scroll" }}>
           {messages.map((m, i) => (
@@ -167,27 +207,43 @@ function Messenger() {
               {m.text && <p>{m.text}</p>}
               {m.media && <video src={m.media} controls width="200" />}
               {m.audio && <audio src={m.audio} controls />}
-              
+
               {/* STATUS */}
-              <span>
-                {m.status === "sent" && "✔"}
-                {m.status === "delivered" && "✔✔"}
-                {m.status === "seen" && "✔✔ (blue)"}
-              </span>
+              {m.senderId === myId && (
+                <span style={{ fontSize: "12px" }}>
+                  {m.status === "sent" && "✔"}
+                  {m.status === "delivered" && "✔✔"}
+                  {m.status === "seen" && "💙✔✔"}
+                </span>
+              )}
             </div>
           ))}
+
+          {/* TYPING */}
+          {typingUser && <p><i>Typing...</i></p>}
+
+          <div ref={chatRef}></div>
         </div>
 
         {/* INPUT */}
-        <input value={text} onChange={(e) => setText(e.target.value)} />
+        <input
+          value={text}
+          onChange={(e) => {
+            setText(e.target.value);
+
+            socket.emit("typing", {
+              senderId: myId,
+              receiverId: currentChat
+            });
+          }}
+        />
 
         <input type="file" onChange={(e) => setMedia(e.target.files[0])} />
 
-        <button onClick={sendMessage}>Send</button>
+        <button onClick={sendMessage}>Send 🚀</button>
 
-        {/* VOICE */}
         <button onMouseDown={startRecording} onMouseUp={stopRecording}>
-          🎤 Hold to Talk
+          🎤 Hold
         </button>
       </div>
     </div>
