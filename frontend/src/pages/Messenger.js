@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
-import Peer from "simple-peer";
+import Peer from "simple-peer/simplepeer.min.js";
 import { storage } from "../firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
