@@ -42,21 +42,11 @@ const UserSchema = new mongoose.Schema({
 
   followers: [String],
   following: [String],
-
-  friendRequests: [String],
-  sentRequests: [String],
   friends: [String],
 
-  notifications: [
-    {
-      text: String,
-      createdAt: { type: Date, default: Date.now }
-    }
-  ],
+  isOnline: { type: Boolean, default: false },
 
-  isProfessional: { type: Boolean, default: false },
-
-  createdAt: { type: Date, default: Date.now }
+  lastSeen: { type: Date, default: Date.now }
 });
 
 const User = mongoose.model("User", UserSchema);
@@ -78,32 +68,73 @@ const auth = (req, res, next) => {
 };
 
 // -----------------------
-// 🔥 SOCKET ROOM CHAT
+// 🔥 ONLINE USERS MAP
+// -----------------------
+const onlineUsers = {};
+
+// -----------------------
+// 🔥 SOCKET SYSTEM (PRO)
 // -----------------------
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  // JOIN ROOM
+  // ✅ REGISTER USER
+  socket.on("addUser", async (userId) => {
+    onlineUsers[userId] = socket.id;
+
+    await User.findByIdAndUpdate(userId, {
+      isOnline: true
+    });
+
+    io.emit("getUsers", Object.keys(onlineUsers));
+  });
+
+  // ✅ JOIN ROOM (PRIVATE CHAT)
   socket.on("joinRoom", ({ senderId, receiverId }) => {
     const roomId = [senderId, receiverId].sort().join("_");
     socket.join(roomId);
   });
 
-  // SEND MESSAGE
+  // ✅ SEND MESSAGE
   socket.on("sendMessage", (data) => {
     const roomId = [data.senderId, data.receiverId].sort().join("_");
 
-    io.to(roomId).emit("receiveMessage", data);
+    io.to(roomId).emit("receiveMessage", {
+      ...data,
+      status: "delivered"
+    });
   });
 
-  // TYPING
+  // ✅ TYPING
   socket.on("typing", (data) => {
     const roomId = [data.senderId, data.receiverId].sort().join("_");
 
     socket.to(roomId).emit("typing", data);
   });
 
-  socket.on("disconnect", () => {
+  // ✅ SEEN STATUS
+  socket.on("seen", (data) => {
+    const roomId = [data.senderId, data.receiverId].sort().join("_");
+
+    socket.to(roomId).emit("seen", data);
+  });
+
+  // ❌ DISCONNECT
+  socket.on("disconnect", async () => {
+    for (const userId in onlineUsers) {
+      if (onlineUsers[userId] === socket.id) {
+        delete onlineUsers[userId];
+
+        await User.findByIdAndUpdate(userId, {
+          isOnline: false,
+          lastSeen: new Date()
+        });
+
+        break;
+      }
+    }
+
+    io.emit("getUsers", Object.keys(onlineUsers));
     console.log("User disconnected:", socket.id);
   });
 });
@@ -154,24 +185,15 @@ app.post("/api/auth/login", async (req, res) => {
 });
 
 // -----------------------
-// USERS
+// USERS API
 // -----------------------
-app.post("/api/users/:id/follow", auth, async (req, res) => {
-  const user = await User.findById(req.params.id);
+app.get("/api/users/friends", auth, async (req, res) => {
   const me = await User.findById(req.user.id);
+  const friends = await User.find({
+    _id: { $in: me.friends }
+  });
 
-  if (!user.followers.includes(me._id.toString())) {
-    user.followers.push(me._id);
-    me.following.push(user._id);
-  } else {
-    user.followers = user.followers.filter(f => f !== me._id.toString());
-    me.following = me.following.filter(f => f !== user._id.toString());
-  }
-
-  await user.save();
-  await me.save();
-
-  res.json({ msg: "Follow updated" });
+  res.json(friends);
 });
 
 // -----------------------
