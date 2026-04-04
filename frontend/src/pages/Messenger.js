@@ -1,14 +1,11 @@
 import React, { useEffect, useState, useRef } from "react";
 import { io } from "socket.io-client";
 import Peer from "simple-peer/simplepeer.min.js";
-import { storage } from "../firebase";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 const API = process.env.REACT_APP_API;
 const socket = io(API);
 
 function Messenger() {
-
   const [friends, setFriends] = useState([]);
   const [groups, setGroups] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState([]);
@@ -19,14 +16,13 @@ function Messenger() {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
 
-  const [media, setMedia] = useState(null);
-  const [preview, setPreview] = useState(null);
-
   const [typingUser, setTypingUser] = useState("");
 
-  // 🔥 VIDEO
+  // VIDEO CALL STATES
   const [stream, setStream] = useState(null);
   const [call, setCall] = useState(null);
+  const [callAccepted, setCallAccepted] = useState(false);
+  const [callEnded, setCallEnded] = useState(false);
   const [callerSignal, setCallerSignal] = useState(null);
 
   const myVideo = useRef();
@@ -36,8 +32,6 @@ function Messenger() {
   const token = localStorage.getItem("token");
   const myId = localStorage.getItem("userId");
 
-  const mediaRecorder = useRef(null);
-  const chunks = useRef([]);
   const chatRef = useRef();
 
   // -----------------------
@@ -56,8 +50,8 @@ function Messenger() {
         });
         setGroups(await g.json());
 
-      } catch {
-        console.log("Load error");
+      } catch (err) {
+        console.log(err);
       }
     };
 
@@ -84,8 +78,8 @@ function Messenger() {
       setMessages(prev => [...prev, msg]);
     });
 
-    socket.on("typing", (data) => {
-      setTypingUser(data.senderId);
+    socket.on("typing", () => {
+      setTypingUser("typing...");
       setTimeout(() => setTypingUser(""), 1000);
     });
 
@@ -96,6 +90,7 @@ function Messenger() {
     });
 
     socket.on("callAccepted", ({ signal }) => {
+      setCallAccepted(true);
       peerRef.current.signal(signal);
     });
 
@@ -103,7 +98,7 @@ function Messenger() {
   }, [myId]);
 
   // -----------------------
-  // SELECT USER
+  // OPEN CHAT
   // -----------------------
   const openChat = (id) => {
     setCurrentChat(id);
@@ -118,7 +113,7 @@ function Messenger() {
   };
 
   // -----------------------
-  // SELECT GROUP
+  // OPEN GROUP
   // -----------------------
   const openGroup = (group) => {
     setCurrentChat(group._id);
@@ -129,97 +124,33 @@ function Messenger() {
   };
 
   // -----------------------
-  // SCROLL
-  // -----------------------
-  useEffect(() => {
-    chatRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  // -----------------------
-  // UPLOAD
-  // -----------------------
-  const uploadFile = async (file) => {
-    const fileRef = ref(storage, "chat/" + Date.now());
-    await uploadBytes(fileRef, file);
-    return await getDownloadURL(fileRef);
-  };
-
-  // -----------------------
   // SEND MESSAGE
   // -----------------------
-  const sendMessage = async () => {
+  const sendMessage = () => {
     if (!currentChat) return;
-
-    let fileUrl = "";
-    if (media) fileUrl = await uploadFile(media);
 
     const msg = {
       senderId: myId,
       receiverId: currentChat,
-      text,
-      media: fileUrl
-    };
-
-    socket.emit("sendMessage", msg);
-    setMessages(prev => [...prev, msg]);
-
-    setText("");
-    setMedia(null);
-    setPreview(null);
-  };
-
-  // -----------------------
-  // SEND GROUP
-  // -----------------------
-  const sendGroupMessage = () => {
-    const msg = {
-      groupId: currentChat,
-      senderId: myId,
       text
     };
 
-    socket.emit("sendGroupMessage", msg);
+    if (isGroup) {
+      socket.emit("sendGroupMessage", {
+        groupId: currentChat,
+        senderId: myId,
+        text
+      });
+    } else {
+      socket.emit("sendMessage", msg);
+    }
+
     setMessages(prev => [...prev, msg]);
     setText("");
   };
 
   // -----------------------
-  // VOICE
-  // -----------------------
-  const startRecording = async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-    mediaRecorder.current = new MediaRecorder(stream);
-
-    mediaRecorder.current.ondataavailable = (e) => {
-      chunks.current.push(e.data);
-    };
-
-    mediaRecorder.current.onstop = async () => {
-      const blob = new Blob(chunks.current);
-      const url = await uploadFile(blob);
-
-      const msg = {
-        senderId: myId,
-        receiverId: currentChat,
-        audio: url
-      };
-
-      socket.emit("sendMessage", msg);
-      setMessages(prev => [...prev, msg]);
-
-      chunks.current = [];
-    };
-
-    mediaRecorder.current.start();
-  };
-
-  const stopRecording = () => {
-    mediaRecorder.current.stop();
-  };
-
-  // -----------------------
-  // VIDEO
+  // VIDEO STREAM START
   // -----------------------
   const startVideo = async () => {
     const mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -231,6 +162,9 @@ function Messenger() {
     myVideo.current.srcObject = mediaStream;
   };
 
+  // -----------------------
+  // CALL USER
+  // -----------------------
   const callUser = () => {
     const peer = new Peer({
       initiator: true,
@@ -253,7 +187,12 @@ function Messenger() {
     peerRef.current = peer;
   };
 
+  // -----------------------
+  // ACCEPT CALL
+  // -----------------------
   const acceptCall = () => {
+    setCallAccepted(true);
+
     const peer = new Peer({
       initiator: false,
       trickle: false,
@@ -275,6 +214,26 @@ function Messenger() {
     peerRef.current = peer;
   };
 
+  // -----------------------
+  // END CALL
+  // -----------------------
+  const endCall = () => {
+    setCallEnded(true);
+    setCall(null);
+    setCallAccepted(false);
+
+    if (peerRef.current) {
+      peerRef.current.destroy();
+    }
+
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+    }
+  };
+
+  // -----------------------
+  // UI
+  // -----------------------
   return (
     <div style={{ display: "flex", height: "100vh" }}>
 
@@ -304,45 +263,96 @@ function Messenger() {
             <div key={i} style={{
               textAlign: m.senderId === myId ? "right" : "left"
             }}>
-              {m.text && <p>{m.text}</p>}
-              {m.media && <video src={m.media} controls width="150" />}
-              {m.audio && <audio src={m.audio} controls />}
+              <p>{m.text}</p>
             </div>
           ))}
           <div ref={chatRef}></div>
         </div>
 
-        <input value={text} onChange={(e) => {
-          setText(e.target.value);
-          socket.emit("typing", {
-            senderId: myId,
-            receiverId: currentChat
-          });
-        }} />
+        <input
+          value={text}
+          onChange={(e) => {
+            setText(e.target.value);
+            socket.emit("typing", {
+              senderId: myId,
+              receiverId: currentChat
+            });
+          }}
+        />
 
-        <input type="file" onChange={(e) => {
-          const file = e.target.files[0];
-          setMedia(file);
-          setPreview(URL.createObjectURL(file));
-        }} />
+        <button onClick={sendMessage}>Send</button>
 
-        {preview && <img src={preview} width="80" alt="" />}
-
-        <button onClick={isGroup ? sendGroupMessage : sendMessage}>
-          Send
-        </button>
-
-        <button onMouseDown={startRecording} onMouseUp={stopRecording}>
-          🎤
-        </button>
-
-        {/* VIDEO */}
         <div>
-          <button onClick={startVideo}>🎥</button>
-          <button onClick={callUser}>📞</button>
+          <button onClick={startVideo}>🎥 Start Camera</button>
+          <button onClick={callUser}>📞 Call</button>
         </div>
 
-        {call && (
-          <div>
-            <p>Incoming Call</p>
-            <button onClick={acceptCall}>Accept</
+        <video ref={myVideo} autoPlay muted width="120" />
+        <video ref={userVideo} autoPlay width="120" />
+
+        {typingUser && <p>{typingUser}</p>}
+      </div>
+
+      {/* INCOMING CALL */}
+      {call && !callAccepted && (
+        <div style={{
+          position: "fixed",
+          top: "20px",
+          right: "20px",
+          background: "#fff",
+          padding: "15px",
+          borderRadius: "10px"
+        }}>
+          <p>📞 Incoming Call</p>
+          <button onClick={acceptCall}>Accept</button>
+          <button onClick={() => setCall(null)}>Reject</button>
+        </div>
+      )}
+
+      {/* VIDEO CALL FULL SCREEN */}
+      {callAccepted && !callEnded && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          background: "black",
+          zIndex: 9999,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center"
+        }}>
+          <video ref={userVideo} autoPlay style={{ width: "80%" }} />
+          <video
+            ref={myVideo}
+            autoPlay
+            muted
+            style={{
+              position: "absolute",
+              bottom: "100px",
+              right: "20px",
+              width: "120px"
+            }}
+          />
+
+          <button
+            onClick={endCall}
+            style={{
+              marginTop: "20px",
+              padding: "10px 20px",
+              background: "red",
+              color: "white"
+            }}
+          >
+            ❌ End Call
+          </button>
+        </div>
+      )}
+
+    </div>
+  );
+}
+
+export default Messenger;
