@@ -1,69 +1,83 @@
 import React, { useEffect, useState } from "react";
 
+const API = process.env.REACT_APP_API;
+
 function Profile() {
   const [user, setUser] = useState(null);
-  const [posts, setPosts] = useState([]);
+  const [name, setName] = useState("");
+  const [bio, setBio] = useState("");
+  const [avatar, setAvatar] = useState("");
 
-  const userId = localStorage.getItem("userId");
+  const token = localStorage.getItem("token");
 
   useEffect(() => {
-    // 👉 Load user
-    fetch(`https://novaplus-social.onrender.com/api/users/${userId}`)
-      .then(res => res.json())
-      .then(data => setUser(data))
-      .catch(() => console.log("User load error"));
+    const loadProfile = async () => {
+      const res = await fetch(`${API}/api/profile/me`, {
+        headers: {
+          Authorization: "Bearer " + token
+        }
+      });
 
-    // 👉 Load posts
-    fetch("https://novaplus-social.onrender.com/api/posts")
-      .then(res => res.json())
-      .then(data => {
-        const myPosts = data.filter(p => p.userId === userId);
-        setPosts(myPosts);
+      const data = await res.json();
+      setUser(data);
+      setName(data.name);
+      setBio(data.bio || "");
+      setAvatar(data.avatar || "");
+    };
+
+    loadProfile();
+  }, []);
+
+  const updateProfile = async () => {
+    await fetch(`${API}/api/profile/update`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + token
+      },
+      body: JSON.stringify({
+        name,
+        bio,
+        avatar
       })
-      .catch(() => console.log("Posts load error"));
+    });
 
-  }, [userId]);
-
-  if (!user) return <p style={{ textAlign: "center" }}>Loading...</p>;
+    alert("Profile Updated ✅");
+  };
 
   return (
-    <div style={{ padding: "20px", textAlign: "center" }}>
-      <h2>{user.name} 🔥</h2>
+    <div style={{ padding: "20px" }}>
+      <h2>👤 Profile</h2>
 
-      <p>📧 {user.email}</p>
-      <p>👥 Followers: {user.followers?.length || 0}</p>
-      <p>➡ Following: {user.following?.length || 0}</p>
-
-      <h3 style={{ marginTop: "20px" }}>Posts 📸</h3>
-
-      {posts.length === 0 ? (
-        <p>No posts yet...</p>
-      ) : (
-        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center" }}>
-          {posts.map(p => (
-            <div key={p._id} style={{ margin: "10px" }}>
-              {p.image && (
-                <img
-                  src={p.image}
-                  alt=""
-                  width="150"
-                  style={{ borderRadius: "10px" }}
-                />
-              )}
-
-              {p.video && (
-                <video
-                  width="150"
-                  controls
-                  style={{ borderRadius: "10px" }}
-                >
-                  <source src={p.video} />
-                </video>
-              )}
-            </div>
-          ))}
-        </div>
+      {avatar && (
+        <img src={avatar} width="100" style={{ borderRadius: "50%" }} />
       )}
+
+      <div>
+        <input
+          placeholder="Avatar URL"
+          value={avatar}
+          onChange={(e) => setAvatar(e.target.value)}
+        />
+      </div>
+
+      <div>
+        <input
+          placeholder="Name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+      </div>
+
+      <div>
+        <textarea
+          placeholder="Bio"
+          value={bio}
+          onChange={(e) => setBio(e.target.value)}
+        />
+      </div>
+
+      <button onClick={updateProfile}>Update Profile</button>
     </div>
   );
 }
