@@ -23,6 +23,7 @@ const io = new Server(server, {
   }
 });
 
+// -----------------------
 app.use(cors());
 app.use(express.json());
 
@@ -34,7 +35,7 @@ mongoose.connect(process.env.MONGO_URI)
   .catch(err => console.log("MongoDB error ❌", err));
 
 // -----------------------
-// MODELS
+// USER MODEL
 // -----------------------
 const UserSchema = new mongoose.Schema({
   name: String,
@@ -45,15 +46,7 @@ const UserSchema = new mongoose.Schema({
   lastSeen: { type: Date, default: Date.now }
 });
 
-const GroupSchema = new mongoose.Schema({
-  name: String,
-  members: [String],
-  createdBy: String,
-  createdAt: { type: Date, default: Date.now }
-});
-
 const User = mongoose.model("User", UserSchema);
-const Group = mongoose.model("Group", GroupSchema);
 
 // -----------------------
 // AUTH MIDDLEWARE
@@ -77,27 +70,29 @@ const auth = (req, res, next) => {
 const onlineUsers = {};
 
 // -----------------------
-// SOCKET SYSTEM
+// SOCKET.IO MAIN SYSTEM
 // -----------------------
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  // REGISTER USER
+  // ✅ ADD USER
   socket.on("addUser", async (userId) => {
     onlineUsers[userId] = socket.id;
 
-    await User.findByIdAndUpdate(userId, { isOnline: true });
+    await User.findByIdAndUpdate(userId, {
+      isOnline: true
+    });
 
     io.emit("getUsers", Object.keys(onlineUsers));
   });
 
-  // JOIN PRIVATE ROOM
+  // ✅ JOIN ROOM
   socket.on("joinRoom", ({ senderId, receiverId }) => {
     const roomId = [senderId, receiverId].sort().join("_");
     socket.join(roomId);
   });
 
-  // SEND PRIVATE MESSAGE
+  // ✅ SEND MESSAGE
   socket.on("sendMessage", (data) => {
     const roomId = [data.senderId, data.receiverId].sort().join("_");
 
@@ -107,60 +102,46 @@ io.on("connection", (socket) => {
     });
   });
 
-  // GROUP JOIN
-  socket.on("joinGroup", (groupId) => {
-    socket.join(groupId);
-  });
-
-  // GROUP MESSAGE
-  socket.on("sendGroupMessage", (data) => {
-    io.to(data.groupId).emit("receiveGroupMessage", data);
-  });
-
-  // TYPING
+  // ✅ TYPING
   socket.on("typing", (data) => {
     const roomId = [data.senderId, data.receiverId].sort().join("_");
     socket.to(roomId).emit("typing", data);
   });
 
-  // SEEN
+  // ✅ SEEN
   socket.on("seen", (data) => {
     const roomId = [data.senderId, data.receiverId].sort().join("_");
     socket.to(roomId).emit("seen", data);
   });
 
-  // -----------------------
-  // VIDEO CALL
-  // -----------------------
+  // =========================
+  // 🔥 VIDEO CALL SYSTEM (FINAL)
+  // =========================
+
+  // 📞 CALL USER
   socket.on("callUser", ({ from, to, signal }) => {
-    const toSocket = onlineUsers[to];
-    if (toSocket) {
-      io.to(toSocket).emit("incomingCall", { from, signal });
+    const toSocketId = onlineUsers[to];
+
+    if (toSocketId) {
+      io.to(toSocketId).emit("incomingCall", {
+        from,
+        signal
+      });
     }
   });
 
+  // ✅ ACCEPT CALL
   socket.on("answerCall", ({ to, signal }) => {
-    const toSocket = onlineUsers[to];
-    if (toSocket) {
-      io.to(toSocket).emit("callAccepted", { signal });
+    const toSocketId = onlineUsers[to];
+
+    if (toSocketId) {
+      io.to(toSocketId).emit("callAccepted", {
+        signal
+      });
     }
   });
 
-  socket.on("rejectCall", ({ to }) => {
-    const toSocket = onlineUsers[to];
-    if (toSocket) {
-      io.to(toSocket).emit("callRejected");
-    }
-  });
-
-  socket.on("endCall", ({ to }) => {
-    const toSocket = onlineUsers[to];
-    if (toSocket) {
-      io.to(toSocket).emit("callEnded");
-    }
-  });
-
-  // DISCONNECT
+  // ❌ DISCONNECT
   socket.on("disconnect", async () => {
     for (const userId in onlineUsers) {
       if (onlineUsers[userId] === socket.id) {
@@ -192,7 +173,12 @@ app.post("/api/auth/signup", async (req, res) => {
 
     const hash = await bcrypt.hash(password, 10);
 
-    const user = new User({ name, email, password: hash });
+    const user = new User({
+      name,
+      email,
+      password: hash
+    });
+
     await user.save();
 
     res.json({ msg: "Signup success", user });
@@ -236,30 +222,6 @@ app.get("/api/users/friends", auth, async (req, res) => {
   });
 
   res.json(friends);
-});
-
-// -----------------------
-// GROUP API
-// -----------------------
-app.post("/api/groups", auth, async (req, res) => {
-  const { name, members } = req.body;
-
-  const group = new Group({
-    name,
-    members: [...members, req.user.id],
-    createdBy: req.user.id
-  });
-
-  await group.save();
-  res.json(group);
-});
-
-app.get("/api/groups", auth, async (req, res) => {
-  const groups = await Group.find({
-    members: req.user.id
-  });
-
-  res.json(groups);
 });
 
 // -----------------------
