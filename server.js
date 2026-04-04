@@ -50,9 +50,18 @@ const GroupSchema = new mongoose.Schema({
   createdBy: String
 });
 
+const NotificationSchema = new mongoose.Schema({
+  userId: String,
+  type: String,
+  text: String,
+  isRead: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now }
+});
+
 const User = mongoose.model("User", UserSchema);
 const Story = mongoose.model("Story", StorySchema);
 const Group = mongoose.model("Group", GroupSchema);
+const Notification = mongoose.model("Notification", NotificationSchema);
 
 // =====================
 // AUTH MIDDLEWARE
@@ -94,9 +103,24 @@ io.on("connection", (socket) => {
     socket.join(roomId);
   });
 
-  socket.on("sendMessage", (data) => {
+  socket.on("sendMessage", async (data) => {
     const roomId = [data.senderId, data.receiverId].sort().join("_");
+
     io.to(roomId).emit("receiveMessage", data);
+
+    // 🔔 Notification
+    const notif = new Notification({
+      userId: data.receiverId,
+      type: "message",
+      text: "New message received"
+    });
+
+    await notif.save();
+
+    const socketId = onlineUsers[data.receiverId];
+    if (socketId) {
+      io.to(socketId).emit("newNotification", notif);
+    }
   });
 
   socket.on("sendGroupMessage", (data) => {
@@ -247,8 +271,38 @@ app.get("/api/story", auth, async (req, res) => {
 });
 
 // =====================
+// NOTIFICATIONS
+// =====================
+app.post("/api/notification", auth, async (req, res) => {
+  const { userId, type, text } = req.body;
+
+  const notif = new Notification({
+    userId,
+    type,
+    text
+  });
+
+  await notif.save();
+
+  const socketId = onlineUsers[userId];
+  if (socketId) {
+    io.to(socketId).emit("newNotification", notif);
+  }
+
+  res.json(notif);
+});
+
+app.get("/api/notification", auth, async (req, res) => {
+  const notifs = await Notification.find({
+    userId: req.user.id
+  }).sort({ createdAt: -1 });
+
+  res.json(notifs);
+});
+
+// =====================
 app.get("/", (req, res) => {
-  res.send("Messenger Backend Running 🚀");
+  res.send("Backend Running 🚀");
 });
 
 // =====================
