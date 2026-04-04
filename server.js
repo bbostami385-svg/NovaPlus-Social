@@ -70,12 +70,12 @@ const auth = (req, res, next) => {
 const onlineUsers = {};
 
 // -----------------------
-// SOCKET.IO
+// SOCKET.IO (FULL PRO)
 // -----------------------
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  // REGISTER USER
+  // ✅ REGISTER USER
   socket.on("addUser", async (userId) => {
     onlineUsers[userId] = socket.id;
 
@@ -86,29 +86,30 @@ io.on("connection", (socket) => {
     io.emit("getUsers", Object.keys(onlineUsers));
   });
 
-  // JOIN CHAT ROOM
+  // ✅ JOIN ROOM
   socket.on("joinRoom", ({ senderId, receiverId }) => {
     const roomId = [senderId, receiverId].sort().join("_");
     socket.join(roomId);
   });
 
-  // SEND MESSAGE
+  // ✅ SEND MESSAGE
   socket.on("sendMessage", (data) => {
     const roomId = [data.senderId, data.receiverId].sort().join("_");
 
     io.to(roomId).emit("receiveMessage", {
       ...data,
-      status: "delivered"
+      status: "delivered",
+      createdAt: new Date()
     });
   });
 
-  // TYPING
+  // ✅ TYPING
   socket.on("typing", (data) => {
     const roomId = [data.senderId, data.receiverId].sort().join("_");
     socket.to(roomId).emit("typing", data);
   });
 
-  // SEEN
+  // ✅ SEEN
   socket.on("seen", (data) => {
     const roomId = [data.senderId, data.receiverId].sort().join("_");
     socket.to(roomId).emit("seen", data);
@@ -118,6 +119,7 @@ io.on("connection", (socket) => {
   // 🔥 VIDEO CALL SYSTEM
   // ======================
 
+  // CALL USER
   socket.on("callUser", ({ from, to, signal }) => {
     const toSocketId = onlineUsers[to];
     if (toSocketId) {
@@ -128,6 +130,7 @@ io.on("connection", (socket) => {
     }
   });
 
+  // ACCEPT CALL
   socket.on("answerCall", ({ to, signal }) => {
     const toSocketId = onlineUsers[to];
     if (toSocketId) {
@@ -135,6 +138,7 @@ io.on("connection", (socket) => {
     }
   });
 
+  // ICE (advanced)
   socket.on("iceCandidate", ({ to, candidate }) => {
     const toSocketId = onlineUsers[to];
     if (toSocketId) {
@@ -142,7 +146,23 @@ io.on("connection", (socket) => {
     }
   });
 
-  // DISCONNECT
+  // END CALL
+  socket.on("endCall", ({ to }) => {
+    const toSocketId = onlineUsers[to];
+    if (toSocketId) {
+      io.to(toSocketId).emit("callEnded");
+    }
+  });
+
+  // REJECT CALL
+  socket.on("rejectCall", ({ to }) => {
+    const toSocketId = onlineUsers[to];
+    if (toSocketId) {
+      io.to(toSocketId).emit("callRejected");
+    }
+  });
+
+  // ❌ DISCONNECT
   socket.on("disconnect", async () => {
     for (const userId in onlineUsers) {
       if (onlineUsers[userId] === socket.id) {
@@ -226,10 +246,16 @@ app.get("/api/users/friends", auth, async (req, res) => {
 });
 
 // -----------------------
-// POSTS ROUTES
+// USER STATUS
 // -----------------------
-const postRoutes = require("./routes/postRoutes");
-app.use("/api/posts", postRoutes);
+app.get("/api/users/status/:id", async (req, res) => {
+  const user = await User.findById(req.params.id);
+
+  res.json({
+    isOnline: user.isOnline,
+    lastSeen: user.lastSeen
+  });
+});
 
 // -----------------------
 app.get("/", (req, res) => {
