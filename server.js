@@ -309,3 +309,20 @@ app.get("/", (req, res) => {
 server.listen(process.env.PORT || 5000, () => {
   console.log("Server running 🚀");
 });
+
+app.get("/api/profile/me", auth, async (req, res) => {
+  const user = await User.findById(req.user.id).select("-password");
+  res.json(user);
+});
+
+app.put("/api/profile/update", auth, async (req, res) => {
+  const { name, bio, avatar } = req.body;
+
+  const user = await User.findByIdAndUpdate(
+    req.user.id,
+    { name, bio, avatar },
+    { new: true }
+  ).select("-password");
+
+  res.json(user);
+});
