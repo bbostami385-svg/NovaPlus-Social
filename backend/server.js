@@ -1,0 +1,166 @@
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import compression from 'compression';
+import morgan from 'morgan';
+import http from 'http';
+import dotenv from 'dotenv';
+import { connectDB } from './config/database.js';
+import { initializeFirebase } from './config/firebase.js';
+import { initializeSocket } from './config/socket.js';
+import { errorHandler, notFound } from './middleware/errorHandler.js';
+import { rateLimit } from './middleware/auth.js';
+
+// Load environment variables
+dotenv.config();
+
+// Initialize Express app
+const app = express();
+const server = http.createServer(app);
+
+// Port configuration
+const PORT = process.env.PORT || 5000;
+const NODE_ENV = process.env.NODE_ENV || 'development';
+
+// ==================== MIDDLEWARE ====================
+
+// Security middleware
+app.use(helmet());
+app.use(compression());
+
+// CORS configuration
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN?.split(',') || '*',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
+);
+
+// Body parser middleware
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Logging middleware
+if (NODE_ENV === 'development') {
+  app.use(morgan('dev'));
+} else {
+  app.use(morgan('combined'));
+}
+
+// Rate limiting
+app.use(
+  '/api/',
+  rateLimit(
+    parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+    parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 900000
+  )
+);
+
+// ==================== ROUTES ====================
+
+// Health check
+app.get('/health', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Server is running',
+    timestamp: new Date(),
+    environment: NODE_ENV,
+  });
+});
+
+// API version
+app.get('/api/version', (req, res) => {
+  res.json({
+    success: true,
+    version: '1.0.0',
+    name: 'NovaPlus Social API',
+    description: 'Production-ready social media platform backend',
+  });
+});
+
+// Import routes (to be created)
+// app.use('/api/auth', authRoutes);
+// app.use('/api/users', userRoutes);
+// app.use('/api/posts', postRoutes);
+// app.use('/api/videos', videoRoutes);
+// app.use('/api/reels', reelRoutes);
+// app.use('/api/stories', storyRoutes);
+// app.use('/api/messages', messageRoutes);
+// app.use('/api/groups', groupRoutes);
+// app.use('/api/notifications', notificationRoutes);
+// app.use('/api/search', searchRoutes);
+
+// ==================== ERROR HANDLING ====================
+
+// 404 handler
+app.use(notFound);
+
+// Global error handler
+app.use(errorHandler);
+
+// ==================== SERVER INITIALIZATION ====================
+
+const startServer = async () => {
+  try {
+    // Connect to MongoDB
+    console.log('🔄 Connecting to MongoDB...');
+    await connectDB();
+
+    // Initialize Firebase
+    console.log('🔄 Initializing Firebase...');
+    initializeFirebase();
+
+    // Initialize Socket.io
+    console.log('🔄 Initializing Socket.io...');
+    const io = initializeSocket(server);
+
+    // Start server
+    server.listen(PORT, () => {
+      console.log(`
+╔════════════════════════════════════════════════════════════════╗
+║                                                                ║
+║   🚀 NovaPlus Social API Server Started Successfully!         ║
+║                                                                ║
+║   📍 Server URL: http://localhost:${PORT}                      ║
+║   🌍 Environment: ${NODE_ENV}                                 ║
+║   🔗 CORS Origins: ${process.env.CORS_ORIGIN || 'All'}        ║
+║                                                                ║
+║   📦 Database: MongoDB                                         ║
+║   🔐 Authentication: Firebase + JWT                           ║
+║   💾 Storage: ${process.env.STORAGE_PROVIDER || 'R2'}         ║
+║   ⚡ Real-time: Socket.io                                     ║
+║                                                                ║
+╚════════════════════════════════════════════════════════════════╝
+      `);
+    });
+
+    // Graceful shutdown
+    process.on('SIGTERM', () => {
+      console.log('SIGTERM received, shutting down gracefully...');
+      server.close(() => {
+        console.log('Server closed');
+        process.exit(0);
+      });
+    });
+
+    process.on('SIGINT', () => {
+      console.log('SIGINT received, shutting down gracefully...');
+      server.close(() => {
+        console.log('Server closed');
+        process.exit(0);
+      });
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error.message);
+    process.exit(1);
+  }
+};
+
+// Start server if not in test environment
+if (process.env.NODE_ENV !== 'test') {
+  startServer();
+}
+
+export default server;
