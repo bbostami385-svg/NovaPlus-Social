@@ -1,0 +1,32 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "build",
+  "installCommand": "npm install",
+  "env": {
+    "REACT_APP_API_URL": "@novaplus_api_url",
+    "REACT_APP_FIREBASE_API_KEY": "@firebase_api_key",
+    "REACT_APP_FIREBASE_AUTH_DOMAIN": "@firebase_auth_domain",
+    "REACT_APP_FIREBASE_PROJECT_ID": "@firebase_project_id",
+    "REACT_APP_FIREBASE_STORAGE_BUCKET": "@firebase_storage_bucket",
+    "REACT_APP_FIREBASE_MESSAGING_SENDER_ID": "@firebase_messaging_sender_id",
+    "REACT_APP_FIREBASE_APP_ID": "@firebase_app_id",
+    "REACT_APP_FIREBASE_MEASUREMENT_ID": "@firebase_measurement_id"
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://novaplus-social-api.onrender.com/api/$1"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    }
+  ]
+}

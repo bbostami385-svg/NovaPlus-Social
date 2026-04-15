@@ -80,16 +80,23 @@ app.get('/api/version', (req, res) => {
   });
 });
 
-// Import routes (to be created)
-// app.use('/api/auth', authRoutes);
-// app.use('/api/users', userRoutes);
-// app.use('/api/posts', postRoutes);
+// Import routes
+import authRoutes from './routes/authRoutes.js';
+import userRoutes from './routes/userRoutes.js';
+import postRoutes from './routes/postRoutes.js';
+import messageRoutes from './routes/messageRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
+
+// Register routes
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/posts', postRoutes);
+app.use('/api/messages', messageRoutes);
+app.use('/api/notifications', notificationRoutes);
 // app.use('/api/videos', videoRoutes);
 // app.use('/api/reels', reelRoutes);
 // app.use('/api/stories', storyRoutes);
-// app.use('/api/messages', messageRoutes);
 // app.use('/api/groups', groupRoutes);
-// app.use('/api/notifications', notificationRoutes);
 // app.use('/api/search', searchRoutes);
 
 // ==================== ERROR HANDLING ====================
