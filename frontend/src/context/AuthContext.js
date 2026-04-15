@@ -1,23 +1,28 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
+import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from 'firebase/auth';
 
 const AuthContext = createContext();
 
+// Firebase Public Configuration (Safe to expose - for Google OAuth)
 const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.REACT_APP_FIREBASE_APP_ID,
-  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID,
+  apiKey: "AIzaSyAQ1wNehf7efchAliA1ZTJdnKEiqbTww08",
+  authDomain: "novaplus-app.firebaseapp.com",
+  projectId: "novaplus-app",
+  storageBucket: "novaplus-app.firebasestorage.app",
+  messagingSenderId: "967183591469",
+  appId: "1:967183591469:web:dc4a5e01aa767bf265b0a4",
+  measurementId: "G-4QXRE8K8KY"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
+
+// Configure Google Sign-In scopes
+googleProvider.addScope('profile');
+googleProvider.addScope('email');
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -27,16 +32,39 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(!!token);
 
-  // Setup axios interceptor
+  // Setup axios interceptor and listen to Firebase auth state
   useEffect(() => {
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      // Verify token is still valid
-      verifyToken();
-    } else {
-      delete axios.defaults.headers.common['Authorization'];
-      setLoading(false);
-    }
+    // Listen to Firebase auth state changes
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      try {
+        if (token) {
+          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          // Verify token is still valid
+          verifyToken();
+        } else if (firebaseUser) {
+          // Firebase user exists but no local token, try to get new token
+          const idToken = await firebaseUser.getIdToken();
+          const response = await axios.post(`${API_URL}/api/auth/google`, {
+            firebaseToken: idToken,
+          });
+          const { token: newToken, user: userData } = response.data;
+          setToken(newToken);
+          setUser(userData);
+          localStorage.setItem('token', newToken);
+          axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+          setIsAuthenticated(true);
+          setLoading(false);
+        } else {
+          delete axios.defaults.headers.common['Authorization'];
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Auth state change error:', error);
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
   }, [token]);
 
   const verifyToken = async () => {
@@ -102,6 +130,9 @@ export function AuthProvider({ children }) {
       
       const response = await axios.post(`${API_URL}/api/auth/google`, {
         firebaseToken: idToken,
+        email: result.user.email,
+        displayName: result.user.displayName,
+        photoURL: result.user.photoURL,
       });
       
       const { token: newToken, user: userData } = response.data;
@@ -113,9 +144,10 @@ export function AuthProvider({ children }) {
       
       return response.data;
     } catch (error) {
+      console.error('Google login error:', error);
       throw error.response?.data || error;
     }
-  };
+  }
 
   const logout = async () => {
     try {
