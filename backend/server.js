@@ -91,6 +91,7 @@ import creatorToolsRoutes from './routes/creatorToolsRoutes.js';
 import achievementRoutes from './routes/achievementRoutes.js';
 import giftRoutes from './routes/giftRoutes.js';
 import sponsorshipRoutes from './routes/sponsorshipRoutes.js';
+import communityRoutes from './routes/communityRoutes.js';
 
 // Register routes
 app.use('/api/auth', authRoutes);
@@ -103,6 +104,7 @@ app.use('/api/creator-tools', creatorToolsRoutes);
 app.use('/api/gamification', achievementRoutes);
 app.use('/api/gifts', giftRoutes);
 app.use('/api/sponsorships', sponsorshipRoutes);
+app.use('/api/community', communityRoutes);
 // app.use('/api/videos', videoRoutes);
 // app.use('/api/reels', reelRoutes);
 // app.use('/api/stories', storyRoutes);
