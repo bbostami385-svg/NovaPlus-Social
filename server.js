@@ -38,6 +38,23 @@ mongoose.connect(process.env.MONGO_URI)
   });
 
 // =====================
+// FIREBASE ADMIN INIT
+// =====================
+const admin = require("firebase-admin");
+
+try {
+  const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+  });
+
+  console.log("Firebase initialized ✅");
+} catch (err) {
+  console.log("Firebase init error ❌", err.message);
+}
+
+// =====================
 // MODELS
 // =====================
 const UserSchema = new mongoose.Schema({
