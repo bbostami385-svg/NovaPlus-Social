@@ -1,5 +1,5 @@
 import express from 'express';
-import { verifyFirebaseToken, authenticate } from '../middleware/auth.js';
+import { verifyFirebaseAuth, authenticate } from '../middleware/auth.js';
 import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 
@@ -154,7 +154,7 @@ router.post('/login', async (req, res) => {
  * @desc    Login/Register with Firebase Google OAuth
  * @access  Public
  */
-router.post('/google', verifyFirebaseToken, async (req, res) => {
+router.post('/google', verifyFirebaseAuth, async (req, res) => {
   try {
     const { firebaseUser } = req;
 

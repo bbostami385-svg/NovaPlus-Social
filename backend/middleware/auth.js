@@ -194,6 +194,8 @@ export const rateLimit = (maxRequests = 100, windowMs = 900000) => {
 // alias fix (no crash)
 export const authenticate = verifyToken;
 
+export const auth = verifyToken;
+
 export default {
   verifyToken,
   verifyFirebaseAuth,
@@ -202,4 +204,5 @@ export default {
   isVerified,
   isNotBanned,
   rateLimit,
+  auth,
 };
