@@ -21,9 +21,15 @@ app.use(express.json());
 // =====================
 // DB CONNECT
 // =====================
+console.log("Connecting to MongoDB...");
+console.log("ENV:", process.env.MONGO_URI); // 🔥 debug
+
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected ✅"))
-  .catch(err => console.log(err));
+  .catch(err => {
+    console.log("MongoDB error ❌", err.message);
+    process.exit(1);
+  });
 
 // =====================
 // MODELS
@@ -34,7 +40,11 @@ const UserSchema = new mongoose.Schema({
   password: String,
   friends: [String],
   isOnline: { type: Boolean, default: false },
-  lastSeen: { type: Date, default: Date.now }
+  lastSeen: { type: Date, default: Date.now },
+
+  // 🔥 FIX (profile support)
+  bio: String,
+  avatar: String
 });
 
 const StorySchema = new mongoose.Schema({
@@ -108,7 +118,6 @@ io.on("connection", (socket) => {
 
     io.to(roomId).emit("receiveMessage", data);
 
-    // 🔔 Notification
     const notif = new Notification({
       userId: data.receiverId,
       type: "message",
@@ -161,6 +170,8 @@ io.on("connection", (socket) => {
           isOnline: false,
           lastSeen: new Date()
         });
+
+        break; // 🔥 FIX
       }
     }
 
@@ -212,8 +223,6 @@ app.post("/api/auth/login", async (req, res) => {
 });
 
 // =====================
-// FRIENDS
-// =====================
 app.get("/api/users/friends", auth, async (req, res) => {
   const me = await User.findById(req.user.id);
 
@@ -222,82 +231,6 @@ app.get("/api/users/friends", auth, async (req, res) => {
   });
 
   res.json(friends);
-});
-
-// =====================
-// GROUPS
-// =====================
-app.post("/api/groups", auth, async (req, res) => {
-  const group = new Group({
-    name: req.body.name,
-    members: [...req.body.members, req.user.id],
-    createdBy: req.user.id
-  });
-
-  await group.save();
-  res.json(group);
-});
-
-app.get("/api/groups", auth, async (req, res) => {
-  const groups = await Group.find({
-    members: req.user.id
-  });
-
-  res.json(groups);
-});
-
-// =====================
-// STORIES
-// =====================
-app.post("/api/story", auth, async (req, res) => {
-  const { media, text } = req.body;
-
-  const story = new Story({
-    userId: req.user.id,
-    media,
-    text
-  });
-
-  await story.save();
-  res.json(story);
-});
-
-app.get("/api/story", auth, async (req, res) => {
-  const stories = await Story.find()
-    .sort({ createdAt: -1 })
-    .limit(50);
-
-  res.json(stories);
-});
-
-// =====================
-// NOTIFICATIONS
-// =====================
-app.post("/api/notification", auth, async (req, res) => {
-  const { userId, type, text } = req.body;
-
-  const notif = new Notification({
-    userId,
-    type,
-    text
-  });
-
-  await notif.save();
-
-  const socketId = onlineUsers[userId];
-  if (socketId) {
-    io.to(socketId).emit("newNotification", notif);
-  }
-
-  res.json(notif);
-});
-
-app.get("/api/notification", auth, async (req, res) => {
-  const notifs = await Notification.find({
-    userId: req.user.id
-  }).sort({ createdAt: -1 });
-
-  res.json(notifs);
 });
 
 // =====================
@@ -310,6 +243,9 @@ server.listen(process.env.PORT || 5000, () => {
   console.log("Server running 🚀");
 });
 
+// =====================
+// PROFILE
+// =====================
 app.get("/api/profile/me", auth, async (req, res) => {
   const user = await User.findById(req.user.id).select("-password");
   res.json(user);
