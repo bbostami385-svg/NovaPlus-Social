@@ -2,7 +2,7 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "devCommand": "npm run dev",
-  "env": {
-    "VITE_API_URL": "@vite_api_url"
-  }
+  "installCommand": "npm install",
+  "framework": "vite",
+  "regions": ["iad1"]
 }
