@@ -6,7 +6,7 @@ import morgan from 'morgan';
 import http from 'http';
 import dotenv from 'dotenv';
 import { connectDB } from './config/database.js';
-import { initializeFirebase } from './config/firebase.js';
+import initializeFirebaseAdmin from './config/firebaseInit.js';
 import { initializeSocket } from './config/socket.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import { rateLimit } from './middleware/auth.js';
@@ -139,7 +139,7 @@ const startServer = async () => {
 
     // Initialize Firebase
     console.log('🔄 Initializing Firebase...');
-    initializeFirebase();
+    initializeFirebaseAdmin();
 
     // Initialize Socket.io
     console.log('🔄 Initializing Socket.io...');
