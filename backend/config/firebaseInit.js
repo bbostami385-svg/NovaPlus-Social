@@ -13,14 +13,35 @@ const initializeFirebaseAdmin = () => {
     // Method 1: Try to parse JSON string from environment
     if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
       try {
-        const jsonString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+        let jsonString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
         console.log('📝 Attempting to parse FIREBASE_SERVICE_ACCOUNT_KEY...');
         
+        // Handle escaped newlines
+        jsonString = jsonString.replace(/\\n/g, '\n');
+        
+        // Try to parse
         serviceAccount = JSON.parse(jsonString);
+        
+        // Validate
+        if (!serviceAccount.project_id) {
+          throw new Error('Parsed JSON missing project_id');
+        }
+        
         console.log('✅ Successfully parsed Firebase service account from JSON string');
         console.log(`   Project ID: ${serviceAccount.project_id}`);
       } catch (parseError) {
         console.warn('⚠️  Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY:', parseError.message);
+        console.warn('   Trying alternative parsing methods...');
+        
+        // Try alternative: maybe it's already an object
+        try {
+          if (typeof process.env.FIREBASE_SERVICE_ACCOUNT_KEY === 'object') {
+            serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+            console.log('✅ Firebase service account loaded as object');
+          }
+        } catch (e) {
+          console.warn('   Alternative parsing also failed');
+        }
       }
     }
     
@@ -44,6 +65,8 @@ const initializeFirebaseAdmin = () => {
       
       if (missingFields.length > 0) {
         console.warn(`⚠️  Missing Firebase environment variables: ${missingFields.join(', ')}`);
+      } else {
+        console.log('✅ All individual Firebase environment variables found');
       }
       
       serviceAccount = {
@@ -61,19 +84,27 @@ const initializeFirebaseAdmin = () => {
       
       if (serviceAccount.project_id) {
         console.log('✅ Service account built from individual environment variables');
+        console.log(`   Project ID: ${serviceAccount.project_id}`);
       }
     }
     
-    // Validate required fields
+    // Final validation
+    console.log('\n📋 Final validation:');
+    console.log(`   - project_id: ${serviceAccount?.project_id ? '✅' : '❌'}`);
+    console.log(`   - private_key: ${serviceAccount?.private_key ? '✅' : '❌'}`);
+    console.log(`   - client_email: ${serviceAccount?.client_email ? '✅' : '❌'}`);
+    
     if (!serviceAccount || !serviceAccount.project_id) {
       throw new Error(
         'Firebase project_id is missing. Please set either:\n' +
         '1. FIREBASE_SERVICE_ACCOUNT_KEY environment variable with complete JSON, OR\n' +
-        '2. Individual Firebase environment variables (FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY, etc.)'
+        '2. Individual Firebase environment variables (FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY, etc.)\n\n' +
+        'Current values:\n' +
+        `   FIREBASE_SERVICE_ACCOUNT_KEY: ${process.env.FIREBASE_SERVICE_ACCOUNT_KEY ? 'SET' : 'NOT SET'}\n` +
+        `   FIREBASE_PROJECT_ID: ${process.env.FIREBASE_PROJECT_ID ? 'SET' : 'NOT SET'}`
       );
     }
     
-    // Validate private key
     if (!serviceAccount.private_key) {
       throw new Error('Firebase private_key is missing from service account');
     }
@@ -84,14 +115,14 @@ const initializeFirebaseAdmin = () => {
       databaseURL: process.env.FIREBASE_DATABASE_URL,
     });
 
-    console.log('✅ Firebase Admin SDK initialized successfully');
+    console.log('\n✅ Firebase Admin SDK initialized successfully!');
     console.log(`   Project: ${serviceAccount.project_id}`);
     return admin;
     
   } catch (error) {
-    console.error('❌ Firebase initialization error:', error.message);
+    console.error('\n❌ Firebase initialization error:', error.message);
     console.error('📋 Error details:', error.stack);
-    console.warn('⚠️  Continuing without Firebase. Some features may not work.');
+    console.warn('\n⚠️  Continuing without Firebase. Some features may not work.');
     return null;
   }
 };
