@@ -123,6 +123,8 @@ import reelsRoutes from './routes/reelsRoutes.js';
 import liveStreamRoutes from './routes/liveStreamRoutes.js';
 import monetizationRoutes from './routes/monetizationRoutes.js';
 import creatorAnalyticsRoutes from './routes/creatorAnalyticsRoutes.js';
+import productsRoutes from './routes/productsRoutes.js';
+import ordersRoutes from './routes/ordersRoutes.js';
 
 // Register routes
 app.use('/api/auth', authRoutes);
@@ -147,6 +149,8 @@ app.use('/api/reels', reelsRoutes);
 app.use('/api/live', liveStreamRoutes);
 app.use('/api/monetization', monetizationRoutes);
 app.use('/api/analytics', creatorAnalyticsRoutes);
+app.use('/api/products', productsRoutes);
+app.use('/api/orders', ordersRoutes);
 // app.use('/api/videos', videoRoutes);
 // app.use('/api/reels', reelRoutes);
 // app.use('/api/stories', storyRoutes);
