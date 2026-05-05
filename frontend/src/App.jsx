@@ -60,14 +60,15 @@ function App() {
             <Route path="/search" element={<Search />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/marketplace" element={<Marketplace />} />
-          </Routes>        ) : (
+          </Routes>
+        ) : (
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/user/:userId" element={<UserProfile />} />
           </Routes>
-        )
+        )}
       </div>
     </Router>
   );
