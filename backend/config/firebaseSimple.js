@@ -4,7 +4,10 @@ const getServiceAccount = () => {
   // Try Base64 encoded service account first (recommended)
   if (process.env.FIREBASE_SERVICE_ACCOUNT_BASE64) {
     try {
-      const jsonString = Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_BASE64, 'base64').toString('utf-8');
+      let base64String = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
+      // Remove any whitespace/newlines from Base64 string
+      base64String = base64String.replace(/\s/g, '');
+      const jsonString = Buffer.from(base64String, 'base64').toString('utf-8');
       const serviceAccount = JSON.parse(jsonString);
       console.log('✅ Loaded Firebase service account from Base64');
       return serviceAccount;
