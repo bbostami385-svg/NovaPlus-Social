@@ -127,6 +127,9 @@ import productsRoutes from './routes/productsRoutes.js';
 import ordersRoutes from './routes/ordersRoutes.js';
 import aiRecommendationsRoutes from './routes/aiRecommendationsRoutes.js';
 import aiSearchRoutes from './routes/aiSearchRoutes.js';
+import achievementsRoutes from './routes/achievementsRoutes.js';
+import challengesRoutes from './routes/challengesRoutes.js';
+import rewardsRoutes from './routes/rewardsRoutes.js';
 
 // Register routes
 app.use('/api/auth', authRoutes);
@@ -155,6 +158,9 @@ app.use('/api/products', productsRoutes);
 app.use('/api/orders', ordersRoutes);
 app.use('/api/ai', aiRecommendationsRoutes);
 app.use('/api/ai', aiSearchRoutes);
+app.use('/api/achievements', achievementsRoutes);
+app.use('/api/challenges', challengesRoutes);
+app.use('/api/rewards', rewardsRoutes);
 // app.use('/api/videos', videoRoutes);
 // app.use('/api/reels', reelRoutes);
 // app.use('/api/stories', storyRoutes);
