@@ -6,7 +6,9 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 function SignUp() {
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '',
+    lastName: '',
+    username: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -49,7 +51,9 @@ function SignUp() {
 
     try {
       const response = await axios.post(`${API_URL}/auth/register`, {
-        name: formData.name,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        username: formData.username,
         email: formData.email,
         password: formData.password,
       });
@@ -75,9 +79,25 @@ function SignUp() {
           <form onSubmit={handleSignUp}>
             <input
               type="text"
-              name="name"
-              placeholder="Full Name"
-              value={formData.name}
+              name="firstName"
+              placeholder="First Name"
+              value={formData.firstName}
+              onChange={handleChange}
+              required
+            />
+            <input
+              type="text"
+              name="lastName"
+              placeholder="Last Name"
+              value={formData.lastName}
+              onChange={handleChange}
+              required
+            />
+            <input
+              type="text"
+              name="username"
+              placeholder="Username"
+              value={formData.username}
               onChange={handleChange}
               required
             />
