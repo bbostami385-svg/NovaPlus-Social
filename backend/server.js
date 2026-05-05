@@ -60,6 +60,26 @@ app.use(
 
 // ==================== ROUTES ====================
 
+// Root route - API info
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'NovaPlus Social API Server',
+    version: '1.0.0',
+    status: 'running',
+    endpoints: {
+      health: '/health',
+      version: '/api/version',
+      auth: '/api/auth',
+      users: '/api/users',
+      posts: '/api/posts',
+      messages: '/api/messages',
+      notifications: '/api/notifications',
+    },
+    documentation: 'https://github.com/bbostami385-svg/NovaPlus-Social',
+  });
+});
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({
