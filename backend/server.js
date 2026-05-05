@@ -121,6 +121,8 @@ import chatRoutes from './routes/chatRoutes.js';
 import storiesRoutes from './routes/storiesRoutes.js';
 import reelsRoutes from './routes/reelsRoutes.js';
 import liveStreamRoutes from './routes/liveStreamRoutes.js';
+import monetizationRoutes from './routes/monetizationRoutes.js';
+import creatorAnalyticsRoutes from './routes/creatorAnalyticsRoutes.js';
 
 // Register routes
 app.use('/api/auth', authRoutes);
@@ -143,6 +145,8 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/stories', storiesRoutes);
 app.use('/api/reels', reelsRoutes);
 app.use('/api/live', liveStreamRoutes);
+app.use('/api/monetization', monetizationRoutes);
+app.use('/api/analytics', creatorAnalyticsRoutes);
 // app.use('/api/videos', videoRoutes);
 // app.use('/api/reels', reelRoutes);
 // app.use('/api/stories', storyRoutes);
