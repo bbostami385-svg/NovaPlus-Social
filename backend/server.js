@@ -117,6 +117,10 @@ import creatorFundRoutes from './routes/creatorFundRoutes.js';
 import privacyRoutes from './routes/privacyRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import webhookRoutes from './routes/webhookRoutes.js';
+import chatRoutes from './routes/chatRoutes.js';
+import storiesRoutes from './routes/storiesRoutes.js';
+import reelsRoutes from './routes/reelsRoutes.js';
+import liveStreamRoutes from './routes/liveStreamRoutes.js';
 
 // Register routes
 app.use('/api/auth', authRoutes);
@@ -135,6 +139,10 @@ app.use('/api/creator-fund', creatorFundRoutes);
 app.use('/api/privacy', privacyRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/webhooks', webhookRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/stories', storiesRoutes);
+app.use('/api/reels', reelsRoutes);
+app.use('/api/live', liveStreamRoutes);
 // app.use('/api/videos', videoRoutes);
 // app.use('/api/reels', reelRoutes);
 // app.use('/api/stories', storyRoutes);
