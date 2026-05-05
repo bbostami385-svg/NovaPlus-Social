@@ -125,6 +125,8 @@ import monetizationRoutes from './routes/monetizationRoutes.js';
 import creatorAnalyticsRoutes from './routes/creatorAnalyticsRoutes.js';
 import productsRoutes from './routes/productsRoutes.js';
 import ordersRoutes from './routes/ordersRoutes.js';
+import aiRecommendationsRoutes from './routes/aiRecommendationsRoutes.js';
+import aiSearchRoutes from './routes/aiSearchRoutes.js';
 
 // Register routes
 app.use('/api/auth', authRoutes);
@@ -151,6 +153,8 @@ app.use('/api/monetization', monetizationRoutes);
 app.use('/api/analytics', creatorAnalyticsRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/orders', ordersRoutes);
+app.use('/api/ai', aiRecommendationsRoutes);
+app.use('/api/ai', aiSearchRoutes);
 // app.use('/api/videos', videoRoutes);
 // app.use('/api/reels', reelRoutes);
 // app.use('/api/stories', storyRoutes);
