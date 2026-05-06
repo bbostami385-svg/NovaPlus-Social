@@ -30,20 +30,30 @@ function SignUp() {
     setError('');
     setLoading(true);
 
+    // Trim all fields
+    const trimmedData = {
+      firstName: formData.firstName.trim(),
+      lastName: formData.lastName.trim(),
+      username: formData.username.trim(),
+      email: formData.email.trim(),
+      password: formData.password,
+      confirmPassword: formData.confirmPassword,
+    };
+
     // Validation
-    if (!formData.firstName || !formData.lastName || !formData.username || !formData.email || !formData.password || !formData.confirmPassword) {
+    if (!trimmedData.firstName || !trimmedData.lastName || !trimmedData.username || !trimmedData.email || !trimmedData.password || !trimmedData.confirmPassword) {
       setError('All fields are required');
       setLoading(false);
       return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
+    if (trimmedData.password !== trimmedData.confirmPassword) {
       setError('Passwords do not match');
       setLoading(false);
       return;
     }
 
-    if (formData.password.length < 6) {
+    if (trimmedData.password.length < 6) {
       setError('Password must be at least 6 characters');
       setLoading(false);
       return;
@@ -51,15 +61,20 @@ function SignUp() {
 
     try {
       const response = await axios.post(`${API_URL}/auth/register`, {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        username: formData.username,
-        email: formData.email,
-        password: formData.password,
+        firstName: trimmedData.firstName,
+        lastName: trimmedData.lastName,
+        username: trimmedData.username,
+        email: trimmedData.email,
+        password: trimmedData.password,
       });
 
-      localStorage.setItem('token', response.data.token);
-      navigate('/');
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+        navigate('/');
+      } else {
+        setError('Sign up successful! Please check your email to verify your account.');
+        setTimeout(() => navigate('/login'), 2000);
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Sign up failed. Please try again.');
     } finally {
