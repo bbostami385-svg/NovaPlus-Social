@@ -31,7 +31,7 @@ function SignUp() {
     setLoading(true);
 
     // Validation
-    if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
+    if (!formData.firstName || !formData.lastName || !formData.username || !formData.email || !formData.password || !formData.confirmPassword) {
       setError('All fields are required');
       setLoading(false);
       return;
