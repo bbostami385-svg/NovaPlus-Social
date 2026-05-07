@@ -1,0 +1,192 @@
+/* Diamond Counter Widget */
+
+.diamond-counter-widget {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.counter-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(131, 56, 236, 0.15));
+  border: 1.5px solid rgba(0, 212, 255, 0.4);
+  border-radius: 50px;
+  backdrop-filter: blur(15px);
+  box-shadow: 0 8px 32px rgba(0, 212, 255, 0.2);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  animation: slideIn 0.5s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.counter-content:hover {
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(131, 56, 236, 0.2));
+  border-color: rgba(0, 212, 255, 0.6);
+  transform: translateY(-5px);
+  box-shadow: 0 12px 40px rgba(0, 212, 255, 0.3);
+}
+
+.diamond-icon {
+  font-size: 24px;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.counter-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.diamond-amount {
+  font-size: 16px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #00d4ff, #8338ec);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.level-badge {
+  font-size: 11px;
+  color: #b0b0b0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+/* Animation Float */
+.animation-float {
+  position: absolute;
+  top: -30px;
+  right: 0;
+  animation: floatUp 1.5s ease-out forwards;
+}
+
+@keyframes floatUp {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-60px) scale(0.8);
+  }
+}
+
+.animation-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: #06ffa5;
+  text-shadow: 0 0 10px rgba(6, 255, 165, 0.6);
+  display: block;
+  white-space: nowrap;
+}
+
+/* Counter Glow */
+.counter-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(0, 212, 255, 0.3) 0%, transparent 70%);
+  border-radius: 50px;
+  pointer-events: none;
+  animation: pulse 2s ease-in-out infinite;
+  z-index: -1;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .diamond-counter-widget {
+    bottom: 20px;
+    right: 20px;
+  }
+
+  .counter-content {
+    padding: 10px 14px;
+    gap: 8px;
+  }
+
+  .diamond-icon {
+    font-size: 20px;
+  }
+
+  .diamond-amount {
+    font-size: 14px;
+  }
+
+  .level-badge {
+    font-size: 10px;
+  }
+
+  .animation-text {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .diamond-counter-widget {
+    bottom: 15px;
+    right: 15px;
+  }
+
+  .counter-content {
+    padding: 8px 12px;
+    gap: 6px;
+    border-radius: 40px;
+  }
+
+  .diamond-icon {
+    font-size: 18px;
+  }
+
+  .diamond-amount {
+    font-size: 12px;
+  }
+
+  .level-badge {
+    font-size: 9px;
+  }
+}

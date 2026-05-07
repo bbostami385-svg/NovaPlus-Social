@@ -15,6 +15,11 @@ import Dashboard from './pages/Dashboard';
 import Marketplace from './pages/Marketplace';
 import Login from './pages/Login';
 import SignUp from './pages/SignUp';
+import DiamondProfile from './pages/DiamondProfile';
+import RewardShop from './pages/RewardShop';
+
+// Components
+import DiamondCounter from './components/DiamondCounter';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -52,15 +57,20 @@ function App() {
     <Router>
       <div className="app">
         {user ? (
-          <Routes>
-            <Route path="/" element={<Feed />} />
-            <Route path="/profile/:userId" element={<Profile />} />
-            <Route path="/messages" element={<Messages />} />
-            <Route path="/notifications" element={<Notifications />} />
-            <Route path="/search" element={<Search />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/marketplace" element={<Marketplace />} />
-          </Routes>
+          <>
+            <DiamondCounter />
+            <Routes>
+              <Route path="/" element={<Feed />} />
+              <Route path="/profile/:userId" element={<Profile />} />
+              <Route path="/messages" element={<Messages />} />
+              <Route path="/notifications" element={<Notifications />} />
+              <Route path="/search" element={<Search />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/marketplace" element={<Marketplace />} />
+              <Route path="/diamond-profile" element={<DiamondProfile />} />
+              <Route path="/reward-shop" element={<RewardShop />} />
+            </Routes>
+          </>
         ) : (
           <Routes>
             <Route path="/" element={<Home />} />

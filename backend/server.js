@@ -130,6 +130,9 @@ import aiSearchRoutes from './routes/aiSearchRoutes.js';
 import achievementsRoutes from './routes/achievementsRoutes.js';
 import challengesRoutes from './routes/challengesRoutes.js';
 import rewardsRoutes from './routes/rewardsRoutes.js';
+import diamondRoutes from './routes/diamondRoutes.js';
+import rewardShopRoutes from './routes/rewardShopRoutes.js';
+import profileEvolutionRoutes from './routes/profileEvolutionRoutes.js';
 
 // Register routes
 app.use('/api/auth', authRoutes);
@@ -161,6 +164,9 @@ app.use('/api/ai', aiSearchRoutes);
 app.use('/api/achievements', achievementsRoutes);
 app.use('/api/challenges', challengesRoutes);
 app.use('/api/rewards', rewardsRoutes);
+app.use('/api/diamond', diamondRoutes);
+app.use('/api/reward-shop', rewardShopRoutes);
+app.use('/api/profile-evolution', profileEvolutionRoutes);
 // app.use('/api/videos', videoRoutes);
 // app.use('/api/reels', reelRoutes);
 // app.use('/api/stories', storyRoutes);
