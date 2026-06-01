@@ -125,6 +125,80 @@ const diamondSchema = new mongoose.Schema(
       },
     ],
 
+    // Freemium Tier System
+    tier: {
+      type: String,
+      enum: ['free', 'premium', 'elite', 'vip'],
+      default: 'free',
+    },
+    premiumExpires: Date,
+    premiumFeatures: {
+      customProfileTheme: {
+        type: Boolean,
+        default: false,
+      },
+      animatedBorder: {
+        type: Boolean,
+        default: false,
+      },
+      profileEffects: {
+        type: Boolean,
+        default: false,
+      },
+      prioritySupport: {
+        type: Boolean,
+        default: false,
+      },
+      adFree: {
+        type: Boolean,
+        default: false,
+      },
+      unlimitedProfileCustomization: {
+        type: Boolean,
+        default: false,
+      },
+      exclusiveContent: {
+        type: Boolean,
+        default: false,
+      },
+      diamondBoost: {
+        type: Number,
+        default: 1,
+      },
+    },
+
+    // Free Tier Limits
+    freeFeatures: {
+      basicProfileTheme: {
+        type: Boolean,
+        default: true,
+      },
+      basicBorder: {
+        type: Boolean,
+        default: true,
+      },
+      basicBadges: {
+        type: Boolean,
+        default: true,
+      },
+      limitedProfileCustomization: {
+        type: Boolean,
+        default: true,
+      },
+      basicAnalytics: {
+        type: Boolean,
+        default: true,
+      },
+      monthlyDiamondLimit: {
+        type: Number,
+        default: 500,
+      },
+      currentMonthDiamonds: {
+        type: Number,
+        default: 0,
+      },
+    },
+
     // Referral System
     referralCount: {
       type: Number,
@@ -225,8 +299,63 @@ diamondSchema.methods.addExperience = async function (amount) {
   return this.save();
 };
 
+// Method to check if premium tier is active
+diamondsSchema.methods.isPremiumActive = function () {
+  if (this.tier === 'free') return false;
+  if (!this.premiumExpires) return false;
+  return this.premiumExpires > new Date();
+};
+
+// Method to upgrade to premium
+diamondsSchema.methods.upgradeToPremium = async function (tier = 'premium', durationDays = 30) {
+  this.tier = tier;
+  this.premiumExpires = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
+
+  // Enable premium features based on tier
+  if (tier === 'premium') {
+    this.premiumFeatures.customProfileTheme = true;
+    this.premiumFeatures.animatedBorder = true;
+    this.premiumFeatures.diamondBoost = 1.5;
+  } else if (tier === 'elite') {
+    this.premiumFeatures.customProfileTheme = true;
+    this.premiumFeatures.animatedBorder = true;
+    this.premiumFeatures.profileEffects = true;
+    this.premiumFeatures.prioritySupport = true;
+    this.premiumFeatures.adFree = true;
+    this.premiumFeatures.diamondBoost = 2;
+  } else if (tier === 'vip') {
+    this.premiumFeatures.customProfileTheme = true;
+    this.premiumFeatures.animatedBorder = true;
+    this.premiumFeatures.profileEffects = true;
+    this.premiumFeatures.prioritySupport = true;
+    this.premiumFeatures.adFree = true;
+    this.premiumFeatures.unlimitedProfileCustomization = true;
+    this.premiumFeatures.exclusiveContent = true;
+    this.premiumFeatures.diamondBoost = 3;
+  }
+
+  return this.save();
+};
+
+// Method to downgrade to free tier
+diamondsSchema.methods.downgradeToFree = async function () {
+  this.tier = 'free';
+  this.premiumExpires = null;
+  this.premiumFeatures = {
+    customProfileTheme: false,
+    animatedBorder: false,
+    profileEffects: false,
+    prioritySupport: false,
+    adFree: false,
+    unlimitedProfileCustomization: false,
+    exclusiveContent: false,
+    diamondBoost: 1,
+  };
+  return this.save();
+};
+
 // Method to check if user can claim daily bonus
-diamondSchema.methods.canClaimDailyBonus = function () {
+diamondsSchema.methods.canClaimDailyBonus = function () {
   if (!this.lastLoginDate) return true;
 
   const today = new Date();
@@ -276,7 +405,7 @@ diamondSchema.methods.applyMultiplier = async function (multiplier, durationHour
 };
 
 // Method to check and remove expired boosts
-diamondSchema.methods.checkExpiredBoosts = async function () {
+diamondsSchema.methods.checkExpiredBoosts = async function () {
   const now = new Date();
 
   // Check multiplier expiry
@@ -288,7 +417,35 @@ diamondSchema.methods.checkExpiredBoosts = async function () {
   // Remove expired active boosts
   this.activeBoosts = this.activeBoosts.filter((boost) => boost.expiresAt > now);
 
+  // Check premium expiry
+  if (this.premiumExpires && this.premiumExpires < now) {
+    await this.downgradeToFree();
+  }
+
   return this.save();
+};
+
+// Method to check free tier monthly limit
+diamondsSchema.methods.canEarnDiamonds = function (amount) {
+  if (this.tier !== 'free') return true; // Premium users have no limit
+
+  // Check if monthly limit reached
+  const monthlyLimit = this.freeFeatures.monthlyDiamondLimit;
+  return this.freeFeatures.currentMonthDiamonds + amount <= monthlyLimit;
+};
+
+// Method to reset monthly diamond counter
+diamondsSchema.methods.resetMonthlyCounter = async function () {
+  const now = new Date();
+  const lastReset = this.updatedAt;
+
+  // Reset if it's a new month
+  if (lastReset.getMonth() !== now.getMonth() || lastReset.getFullYear() !== now.getFullYear()) {
+    this.freeFeatures.currentMonthDiamonds = 0;
+    return this.save();
+  }
+
+  return this;
 };
 
 export default mongoose.model('Diamond', diamondSchema);
