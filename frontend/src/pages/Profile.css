@@ -1,0 +1,355 @@
+.profile-container {
+  max-width: 600px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
+  min-height: 100vh;
+  padding-bottom: 100px;
+  color: #fff;
+}
+
+.profile-loading,
+.profile-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  font-size: 18px;
+  color: #00d4ff;
+}
+
+/* Profile Header */
+.profile-header {
+  position: relative;
+  padding-bottom: 20px;
+}
+
+.profile-cover {
+  height: 150px;
+  background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.cover-image {
+  width: 100%;
+  height: 100%;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300"><defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="1200" height="300" fill="url(%23grid)"/></svg>');
+  opacity: 0.5;
+}
+
+.profile-info {
+  padding: 0 20px;
+  margin-top: -50px;
+  position: relative;
+  z-index: 10;
+}
+
+.profile-avatar {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  margin-bottom: 15px;
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 4px solid #1a1a2e;
+  object-fit: cover;
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+}
+
+.avatar-badge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: #00d4ff;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  border: 2px solid #1a1a2e;
+}
+
+.premium-badge {
+  display: block;
+}
+
+.profile-details {
+  margin-bottom: 15px;
+}
+
+.profile-name {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+  color: #fff;
+}
+
+.profile-username {
+  font-size: 14px;
+  color: #00d4ff;
+  margin: 5px 0;
+}
+
+.profile-bio {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 10px 0;
+  line-height: 1.5;
+}
+
+.profile-stats {
+  display: flex;
+  gap: 20px;
+  margin: 15px 0;
+  padding: 15px;
+  background: rgba(0, 212, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(0, 212, 255, 0.2);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #00d4ff;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 5px;
+}
+
+.edit-profile-btn {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+}
+
+.edit-profile-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(0, 212, 255, 0.4);
+}
+
+/* Diamond Section */
+.diamond-section {
+  padding: 20px;
+  margin: 20px;
+  background: rgba(0, 212, 255, 0.05);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  border-radius: 12px;
+}
+
+.diamond-header {
+  margin-bottom: 15px;
+}
+
+.diamond-header h2 {
+  margin: 0;
+  font-size: 18px;
+  color: #00d4ff;
+}
+
+.diamond-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.diamond-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 212, 255, 0.1);
+}
+
+.diamond-icon {
+  font-size: 24px;
+}
+
+.diamond-info {
+  flex: 1;
+}
+
+.diamond-label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+}
+
+.diamond-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #00d4ff;
+  margin: 5px 0 0 0;
+}
+
+.level-progress {
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 8px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00d4ff, #0099cc);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+}
+
+/* Tabs */
+.profile-tabs {
+  display: flex;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+  padding: 0 20px;
+  gap: 0;
+}
+
+.tab {
+  flex: 1;
+  padding: 15px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  position: relative;
+  transition: color 0.3s ease;
+}
+
+.tab:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.tab.active {
+  color: #00d4ff;
+}
+
+.tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #00d4ff, #0099cc);
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+}
+
+/* Tab Content */
+.tab-content {
+  padding: 20px;
+}
+
+.stats-content,
+.posts-content,
+.media-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 15px;
+  background: rgba(0, 212, 255, 0.05);
+  border: 1px solid rgba(0, 212, 255, 0.1);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+  background: rgba(0, 212, 255, 0.1);
+  border-color: rgba(0, 212, 255, 0.3);
+}
+
+.stat-icon {
+  font-size: 24px;
+}
+
+.stat-text {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.empty-message {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.5);
+  padding: 40px 20px;
+  font-size: 14px;
+}
+
+.profile-bottom-padding {
+  height: 20px;
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .profile-container {
+    padding-bottom: 80px;
+  }
+
+  .profile-cover {
+    height: 120px;
+  }
+
+  .profile-avatar {
+    width: 80px;
+    height: 80px;
+  }
+
+  .profile-name {
+    font-size: 20px;
+  }
+
+  .diamond-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-stats {
+    gap: 15px;
+  }
+}
